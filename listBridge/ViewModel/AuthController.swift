@@ -16,6 +16,26 @@ class AuthController: NSObject{
     
     private var webAuthSession: ASWebAuthenticationSession?
     
+    var isSpotifyLoggedIn: Bool = false
+    
+
+    //MARK: -GENERAL AUTH CONTROL
+    func checkLoginStatus() async {
+        
+        guard let spotifyAccessToken = await SpotifyTokenManager.shared.getAccessToken() else {
+            await MainActor.run {
+                self.isSpotifyLoggedIn = false
+            }
+            return
+        }
+        
+        await MainActor.run {
+            self.isSpotifyLoggedIn = true
+        }
+    }
+    
+    
+    
     //MARK: -SPOTIFY AUTH
     func getSpotifyLoginURL() async throws -> URL {
         
@@ -80,11 +100,13 @@ class AuthController: NSObject{
                         print("State: \(String(describing: state))")
                         
                         Task{
-                            try await self?.exchangeCodeForToken(code: code, state: state)
+                            let tokenData = try await self?.exchangeCodeForToken(code: code, state: state)
+                            
                         }
                     }
                     
                 }
+                
                 self.webAuthSession?.presentationContextProvider = self
                 self.webAuthSession?.prefersEphemeralWebBrowserSession = false
                 
@@ -97,7 +119,7 @@ class AuthController: NSObject{
         }
     }
     
-    func exchangeCodeForToken(code: String, state: String) async throws{
+    func exchangeCodeForToken(code: String, state: String) async throws ->SpotifyTokenResponse?{
         
         let spotifyCallbackURL = "\(self.baseURL)/spotify/callback"
         
@@ -131,13 +153,57 @@ class AuthController: NSObject{
             let decoder = JSONDecoder()
             
             let tokenData = try decoder.decode(SpotifyTokenResponse.self, from: data)
+            
             print(tokenData)
             
+            return tokenData
             
             
         }catch{
             print("Spotify credentials cannot be retrieved.")
+            return nil
         }
+    }
+    
+    func refreshSpotifyToken(refreshToken: String) async throws ->SpotifyTokenResponse?{
+        
+        let spotifyCallbackURL = "\(self.baseURL)/spotify/refresh-token"
+        
+        var components = URLComponents(string: spotifyCallbackURL)!
+        
+        components.queryItems = [
+            URLQueryItem(name: "refresh_token", value: refreshToken)
+        ]
+        guard let url = components.url else {
+            throw AuthError.invalidURL
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        do{
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw AuthError.invalidResponseURL
+            }
+            guard (200..<303).contains(httpResponse.statusCode) else {
+                throw AuthError.serverError(statusCode: httpResponse.statusCode)
+            }
+            let decoder = JSONDecoder()
+            
+            let spotifyTokenResponse = try decoder.decode(SpotifyTokenResponse.self, from: data)
+            
+            print(spotifyTokenResponse)
+            
+            return spotifyTokenResponse
+            
+        }catch{
+            print("Error Refreshing Token")
+            return nil
+        }
+
     }
     //MARK: -APPLE MUSIC AUTH
     

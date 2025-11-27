@@ -15,7 +15,7 @@ actor KeychainService {
     
     private init() {}
     
-    func save(data: Data, service: String, account: String){
+    func save(_ data: Data, service: String, account: String){
         let query = [
                     kSecValueData: data,
                     kSecClass: kSecClassGenericPassword,
@@ -54,9 +54,9 @@ actor KeychainService {
 
 extension KeychainService{
     
-    func save(_ value : String, service: String, account:String){
+    func saveString(_ value : String, service: String, account:String){
         if let data = value.data(using: .utf8) {
-            save(data: data, service: service, account: account)
+            save(data, service: service, account: account)
         }
     }
     func readString(service:String ,account: String) -> String? {

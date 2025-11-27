@@ -13,7 +13,7 @@ import SwiftUI
 class AppState{
     
     var currentScreen: AppStateType = .splash
-
+    
     enum AppStateType{
         case splash
         case auth
@@ -35,9 +35,7 @@ class AppState{
             else{
                 self.currentScreen = .auth
             }
-            
         }
-        
     }
     private func isUserLoggedIn() -> Bool {
         
