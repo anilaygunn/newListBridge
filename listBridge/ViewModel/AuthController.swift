@@ -16,6 +16,7 @@ class AuthController: NSObject{
     
     private var webAuthSession: ASWebAuthenticationSession?
     
+    //MARK: -SPOTIFY AUTH
     func getSpotifyLoginURL() async throws -> URL {
         
         let spotifyLoginURL = "\(self.baseURL)/spotify/login"
@@ -45,45 +46,104 @@ class AuthController: NSObject{
         return finalURL
     }
     
-    
     @MainActor
-        func logInWithSpotify() {
-            Task {
-                do {
-                    
-                    let authURL = try await self.getSpotifyLoginURL()
-                    print("Gidilecek URL: \(authURL)")
-                    
-                    let callbackScheme = "listBridge"
-                    
-                    self.webAuthSession = ASWebAuthenticationSession(
-                        url: authURL,
-                        callbackURLScheme: callbackScheme
-                    ) { [weak self] (callbackURL, error) in
-                        
-                        if let error = error {
-                            print("Hata oluştu: \(error.localizedDescription)")
-                            return
-                        }
-                        
-                        guard let callbackURL = callbackURL else { return }
-                        
-                        print("Dönen URL: \(callbackURL)")
-                        
-                    }
+    func logInWithSpotify() async{
+        Task {
+            do {
                 
-                    self.webAuthSession?.presentationContextProvider = self
-                    self.webAuthSession?.prefersEphemeralWebBrowserSession = false
+                let authURL = try await self.getSpotifyLoginURL()
+                print("Destination URL: \(authURL)")
+                
+                let callbackScheme = "listBridge"
+                
+                self.webAuthSession = ASWebAuthenticationSession(
+                    url: authURL,
+                    callbackURLScheme: callbackScheme
+                ) { [weak self] (callbackURL, error) in
                     
-                    let started = self.webAuthSession?.start()
-                    print("Session başlatıldı mı?: \(String(describing: started))")
+                    if let error = error {
+                        print("Error: \(error.localizedDescription)")
+                        return
+                    }
                     
-                } catch {
-                    print("URL alınamadı: \(error)")
+                    guard let callbackURL = callbackURL else { return }
+                    
+                    print("Returned URL: \(callbackURL)")
+                    
+                    let queryItems = URLComponents(string: callbackURL.absoluteString)?.queryItems
+                    
+                    let code = queryItems?.filter( { $0.name == "code" } ).first?.value
+                    let state = queryItems?.filter( { $0.name == "state" } ).first?.value
+                    
+                    if let code = code , let state = state {
+                        print("Code: \(String(describing: code))")
+                        print("State: \(String(describing: state))")
+                        
+                        Task{
+                            try await self?.exchangeCodeForToken(code: code, state: state)
+                        }
+                    }
+                    
                 }
+                self.webAuthSession?.presentationContextProvider = self
+                self.webAuthSession?.prefersEphemeralWebBrowserSession = false
+                
+                let started = self.webAuthSession?.start()
+                print("Is session started: \(String(describing: started))")
+                
+            } catch {
+                print("URL problem: \(error)")
             }
         }
+    }
+    
+    func exchangeCodeForToken(code: String, state: String) async throws{
+        
+        let spotifyCallbackURL = "\(self.baseURL)/spotify/callback"
+        
+        var components = URLComponents(string: spotifyCallbackURL)!
+        
+        components.queryItems = [
+            URLQueryItem(name: "code", value: code),
+            URLQueryItem(name: "state", value: state)
+        ]
+        
+        guard let url = components.url else {
+            throw AuthError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        do{
+            
+            let(data,response) = try await URLSession.shared.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw AuthError.invalidResponseURL
+            }
+            
+            guard (200..<303).contains(httpResponse.statusCode) else {
+                throw AuthError.serverError(statusCode: httpResponse.statusCode)
+            }
+            
+            let decoder = JSONDecoder()
+            
+            let tokenData = try decoder.decode(SpotifyTokenResponse.self, from: data)
+            print(tokenData)
+            
+            
+            
+        }catch{
+            print("Spotify credentials cannot be retrieved.")
+        }
+    }
+    //MARK: -APPLE MUSIC AUTH
+    
 }
+
+    
 
 extension AuthController: ASWebAuthenticationPresentationContextProviding {
     

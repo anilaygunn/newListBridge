@@ -9,5 +9,4 @@ import Foundation
 
 struct SpotifyLoginResponse: Decodable {
     let authURL: String
-    
 }
