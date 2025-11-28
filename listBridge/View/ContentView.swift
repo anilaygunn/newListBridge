@@ -1,18 +1,39 @@
 //
 //  ContentView.swift
-//  listBridge
-//
-//  Created by Anıl Aygün on 16.11.2025.
+//  ContentBridge
 //
 
 import SwiftUI
 
-struct ContentView: View {
+struct RootView: View {
+    @Environment(AppState.self) var appState
+    
     var body: some View {
-        Text("Hello World")
+        ZStack {
+            
+            switch appState.currentScreen {
+            case .splash:
+                SplashView()
+                    .transition(.opacity)
+            
+            case .auth:
+                AuthView(onLoginSuccess: {
+                    withAnimation {
+                        appState.currentScreen = .main
+                    }
+                })
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                
+            case .main:
+                MainView()
+                    .transition(.opacity)
+            }
+        }
+        
+        .animation(.easeInOut(duration: 0.5), value: appState.currentScreen)
+        .task {
+            
+            await appState.checkInitalScreen()
+        }
     }
-}
-
-#Preview {
-    ContentView()
 }
