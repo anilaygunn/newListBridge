@@ -260,8 +260,6 @@ class AuthController: NSObject{
     
 }
 
-    
-
 extension AuthController: ASWebAuthenticationPresentationContextProviding {
     
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {

@@ -16,88 +16,126 @@ struct AuthView: View {
     var body: some View {
         
         ZStack {
+            
             Color.black
                 .ignoresSafeArea()
             
-            VStack(spacing: 40) {
-                Image("app_logo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 200, height: 200, alignment: .center)
-                    .padding(.top, 40)
+            VStack(spacing: 0) {
                 
-                //Spotify Button
-                Button {
-                    Task { @MainActor in
-                        await authController.logInWithSpotify()
+                VStack(spacing: 20){
+                    Image("app_logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 120, height: 120, alignment: .center)
+                        .padding(.top, 60)
+                    
+                    
+                    HStack(spacing: 0) {
+                        Text("Sync Your ")
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundStyle(.white)
                         
-                        if authController.canFullyLogin{
-                            onLoginSuccess()
-                        }
+                        Text("Vibe")
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundStyle(
+                                
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 0.4, green: 0.8, blue: 0.5),
+                                        Color(red: 0.9, green: 0.4, blue: 0.4)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
                     }
-                } label: {
-                    HStack(spacing: 12) {
-                        
-                        ZStack {
+                    
+                    Text("Connect your libraries. Share your world.")
+                        .font(.system(size: 17, weight: .regular))
+                        .foregroundStyle(.gray)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                }
+                
+                Spacer()
+                
+               
+                VStack(spacing: 16){
+                    
+                    Button {
+                        Task { @MainActor in
+                            await authController.logInWithSpotify()
+                            
+                            if authController.canFullyLogin{
+                                onLoginSuccess()
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 12) {
                             Image("spotify_logo")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 24, height: 24)
+                                .foregroundColor(.black)
+                            
+                            Text(authController.isSpotifyLoggedIn ? "Continue with Spotify" : "Continue with Spotify")
+                                .font(.system(size: 18, weight: .semibold))
                         }
-                        .frame(width: 40, height: 40)
-                        
-                        Text(authController.isSpotifyLoggedIn ? "Logged In with Spotify" : "Log In with Spotify" )
-                            .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.black)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(
+                            RoundedRectangle(cornerRadius: 28)
+                                .fill(Color(red: 0.35, green: 0.75, blue: 0.45))
+                        )
                     }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: 300)
-                    .frame(height: 56)
-                    .background(
-                        RoundedRectangle(cornerRadius: 28)
-                            .fill(Color(red: 0.11, green: 0.73, blue: 0.33))
-                    )
-                    .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 4)
-                }
-                
-                
-                //Apple Music Button
-                Button(action:{
-                    Task {
-                        await authController.requestAppleMusicAccess()
-                        
-                        if authController.canFullyLogin {
-                            onLoginSuccess()
+                    .padding(.horizontal, 24)
+                    
+                    Button(action:{
+                        Task {
+                            await authController.requestAppleMusicAccess()
+                            
+                            if authController.canFullyLogin {
+                                onLoginSuccess()
+                            }
                         }
-                    }
-                }) {
-                    HStack(spacing: 12) {
-                        
-                        ZStack {
-                            Image(systemName: "applelogo")
+                    }) {
+                        HStack(spacing: 12) {
+                            
+                            Image(systemName: "applelogo") // Veya "applelogo"
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 24, height: 24)
+                                .frame(width: 20, height: 20)
+                                .foregroundStyle(Color(red: 0.98, green: 0.18, blue: 0.28)) // İkon Rengi Kırmızı
+                            
+                            Text(authController.isAppleloggedIn ? "Continue with Apple Music" : "Continue with Apple Music")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(.black) // Yazı Rengi Siyah
                         }
-                        .frame(width: 40, height: 40)
-                        
-                        Text(authController.isAppleloggedIn ? "Logged In with Apple Music" : "Log In with Apple Music")
-                            .font(.system(size: 16, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(
+                            RoundedRectangle(cornerRadius: 28)
+                                .fill(Color.white)
+                        )
                     }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: 300)
-                    .frame(height: 56)
-                    .background(
-                        RoundedRectangle(cornerRadius: 28)
-                            .fill(Color(red: 0.98, green: 0.18, blue: 0.28))
-                    )
-                    .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 4)
+                    .padding(.horizontal, 24)
+                      
+                    VStack(spacing: 2) {
+                        Text("By continuing, you agree to our Terms and")
+                        Text("Privacy Policy.")
+                            .underline()
+                    }
+                    .font(.system(size: 12))
+                    .foregroundStyle(.gray.opacity(0.6))
+                    .padding(.top, 20)
+                    .padding(.bottom, 40)
                 }
-                
-                Spacer()
             }
-            .padding()
-            
         }
     }
 }
 
+#Preview {
+    AuthView(onLoginSuccess: {})
+}
