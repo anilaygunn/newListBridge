@@ -10,6 +10,7 @@ import Foundation
 class SpotifyTokenManager {
     
     static let shared = SpotifyTokenManager()
+    
     private init() {}
     
     func saveTokens(accessToken: String, refreshToken: String) async  {

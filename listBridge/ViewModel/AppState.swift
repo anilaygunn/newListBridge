@@ -1,47 +1,43 @@
-//
-//  AppState.swift
-//  listBridge
-//
-//  Created by Anıl Aygün on 16.11.2025.
-//
-
 import Foundation
 import Observation
 import SwiftUI
 
 @Observable
-class AppState{
+@MainActor
+class AppState {
     
-    var currentScreen: AppStateType = .splash
-    
-    enum AppStateType{
+    enum AppStateType {
         case splash
         case auth
         case main
     }
     
-    init() {
-        checkInitalScreen()
+    var currentScreen: AppStateType = .splash
+    
+    private var authController: AuthController
+    
+    init(authController: AuthController = .shared) {
+        self.authController = authController
     }
     
-    func checkInitalScreen(){
+    func checkInitalScreen() async {
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            
-            if (self.isUserLoggedIn()){
-                
-                self.currentScreen = .main
+        await withTaskGroup(of: Void.self) { group in
+          
+            group.addTask {
+                await self.authController.checkLoginStatus()
             }
-            else{
-                self.currentScreen = .auth
+            
+            
+            group.addTask {
+                try? await Task.sleep(nanoseconds: 2 * 1_000_000_000)
             }
         }
-    }
-    private func isUserLoggedIn() -> Bool {
         
-        return UserDefaults.standard.bool(forKey: "isLoggedIn")
-        
+        if authController.canFullyLogin {
+            self.currentScreen = .main
+        } else {
+            self.currentScreen = .auth
+        }
     }
-    
-    
 }

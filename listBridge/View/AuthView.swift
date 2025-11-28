@@ -9,7 +9,9 @@ import SwiftUI
 
 struct AuthView: View {
     
-    var authController = AuthController()
+    let authController = AuthController.shared
+    
+    var onLoginSuccess: () -> Void
     
     var body: some View {
         
@@ -27,7 +29,11 @@ struct AuthView: View {
                 //Spotify Button
                 Button {
                     Task { @MainActor in
-                        try await authController.logInWithSpotify()
+                        await authController.logInWithSpotify()
+                        
+                        if authController.canFullyLogin{
+                            onLoginSuccess()
+                        }
                     }
                 } label: {
                     HStack(spacing: 12) {
@@ -40,7 +46,7 @@ struct AuthView: View {
                         }
                         .frame(width: 40, height: 40)
                         
-                        Text("Log In with Spotify")
+                        Text(authController.isSpotifyLoggedIn ? "Logged In with Spotify" : "Log In with Spotify" )
                             .font(.system(size: 16, weight: .semibold))
                     }
                     .foregroundStyle(.white)
@@ -55,38 +61,43 @@ struct AuthView: View {
                 
                 
                 //Apple Music Button
-                /*Button() {
-                 HStack(spacing: 12) {
-                 
-                 ZStack {
-                 Image(systemName: "applelogo")
-                 .resizable()
-                 .scaledToFit()
-                 .frame(width: 24, height: 24)
-                 }
-                 .frame(width: 40, height: 40)
-                 
-                 Text("Log In with Apple Music")
-                 .font(.system(size: 16, weight: .semibold))
-                 }
-                 .foregroundStyle(.white)
-                 .frame(maxWidth: 300)
-                 .frame(height: 56)
-                 .background(
-                 RoundedRectangle(cornerRadius: 28)
-                 .fill(Color(red: 0.98, green: 0.18, blue: 0.28))
-                 )
-                 .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 4)
-                 }
-                 
-                 Spacer()
-                 }*/
-                .padding()
+                Button(action:{
+                    Task {
+                        await authController.requestAppleMusicAccess()
+                        
+                        if authController.canFullyLogin {
+                            onLoginSuccess()
+                        }
+                    }
+                }) {
+                    HStack(spacing: 12) {
+                        
+                        ZStack {
+                            Image(systemName: "applelogo")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 24, height: 24)
+                        }
+                        .frame(width: 40, height: 40)
+                        
+                        Text(authController.isAppleloggedIn ? "Logged In with Apple Music" : "Log In with Apple Music")
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: 300)
+                    .frame(height: 56)
+                    .background(
+                        RoundedRectangle(cornerRadius: 28)
+                            .fill(Color(red: 0.98, green: 0.18, blue: 0.28))
+                    )
+                    .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 4)
+                }
                 
+                Spacer()
             }
+            .padding()
+            
         }
     }
 }
-#Preview {
-    AuthView()
-}
+

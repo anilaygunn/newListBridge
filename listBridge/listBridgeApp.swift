@@ -10,6 +10,7 @@ import Observation
 
 @main
 struct YourApp: App {
+    
     @State private var appState = AppState()
     
     var body: some Scene {
@@ -19,12 +20,17 @@ struct YourApp: App {
                 case .splash:
                     SplashView()
                 case .auth:
-                    AuthView()
+                    AuthView(onLoginSuccess: {
+                        appState.currentScreen = .main
+                    })
                 case .main:
                     ContentView()
                 }
             }
             .environment(appState)
+            .task{
+                await appState.checkInitalScreen()
+            }
         }
     }
 }

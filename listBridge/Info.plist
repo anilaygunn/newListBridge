@@ -15,5 +15,7 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>This allows the app to read your current library for transfers and save new playlists to your Apple Music account.</string>
 </dict>
 </plist>

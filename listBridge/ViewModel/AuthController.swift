@@ -8,29 +8,48 @@
 import Foundation
 import Observation
 import AuthenticationServices
+import MusicKit
+import StoreKit
 
 @Observable
+@MainActor
 class AuthController: NSObject{
+    
+    static let shared = AuthController()
+    
+    private override init(){}
+    
+    //MARK: -PROPERTIES
     
     let baseURL = "http://localhost:3000/api/auth"
     
     private var webAuthSession: ASWebAuthenticationSession?
     
     var isSpotifyLoggedIn: Bool = false
+    var isAppleloggedIn: Bool = false
     
-
+    var canFullyLogin : Bool {
+        isAppleloggedIn && isSpotifyLoggedIn
+    }
+    
     //MARK: -GENERAL AUTH CONTROL
     func checkLoginStatus() async {
         
-        guard let spotifyAccessToken = await SpotifyTokenManager.shared.getAccessToken() else {
-            await MainActor.run {
-                self.isSpotifyLoggedIn = false
-            }
+        guard (await SpotifyTokenManager.shared.getAccessToken()) != nil else {
+            
+            self.isSpotifyLoggedIn = false
             return
         }
         
-        await MainActor.run {
-            self.isSpotifyLoggedIn = true
+        self.isSpotifyLoggedIn = true
+        
+        let musicStatus = MusicAuthorization.currentStatus
+            
+        if musicStatus == .authorized {
+            
+            self.isAppleloggedIn = true
+        } else {
+            self.isAppleloggedIn = false
         }
     }
     
@@ -66,7 +85,7 @@ class AuthController: NSObject{
         return finalURL
     }
     
-    @MainActor
+    
     func logInWithSpotify() async{
         Task {
             do {
@@ -99,8 +118,21 @@ class AuthController: NSObject{
                         print("Code: \(String(describing: code))")
                         print("State: \(String(describing: state))")
                         
-                        Task{
-                            let tokenData = try await self?.exchangeCodeForToken(code: code, state: state)
+                        Task{ [weak self] in
+                            
+                            guard let self else { return }
+                            
+                            guard let tokenData = try await self.exchangeCodeForToken(code: code, state: state) else {
+                                print("HATA: Token verisi boş döndü.")
+                                return
+                            }
+
+                            await SpotifyTokenManager.shared.saveTokens(
+                                accessToken: tokenData.accessToken!,
+                                refreshToken: tokenData.refreshToken!
+                            )
+                            
+                            self.isSpotifyLoggedIn = true
                             
                         }
                     }
@@ -206,6 +238,25 @@ class AuthController: NSObject{
 
     }
     //MARK: -APPLE MUSIC AUTH
+    @MainActor 
+    func requestAppleMusicAccess() async{
+        let status = await MusicAuthorization.request()
+        
+        switch status {
+        case .authorized:
+            print("Access accepted.")
+            self.isAppleloggedIn = true
+            
+        case .denied, .restricted:
+            print("Access is denied or limited.")
+           
+        case .notDetermined:
+            print("Acces is not determined.")
+        @unknown default:
+            print("Unknown situation.")
+            
+        }
+    }
     
 }
 
@@ -226,4 +277,5 @@ enum AuthError: Error {
     case serverError(statusCode: Int)
     case decodingError
     case invalidResponseURL
+    case NoApplePermission
 }
