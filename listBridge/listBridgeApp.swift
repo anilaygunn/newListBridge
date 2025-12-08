@@ -7,17 +7,19 @@
 
 import SwiftUI
 import Observation
+import SwiftData
 
 @main
+
 struct ListBridgeApp: App {
     
     @State private var appState = AppState()
     
     var body: some Scene {
         WindowGroup {
-            
             ContentView()
                 .environment(appState)
         }
+        .modelContainer(for: [SpotifyPlaylist.self, ApplePlaylist.self])
     }
 }

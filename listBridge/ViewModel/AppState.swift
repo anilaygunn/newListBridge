@@ -18,17 +18,18 @@ class AppState {
     }
     
     var currentScreen: AppStateType = .splash
-    private var authController: AuthController
     
-    init(authController: AuthController? = nil) {
-        self.authController = authController ?? AuthController.shared
+    var authViewModel: AuthViewModel
+    
+    init(authViewModel: AuthViewModel? = nil) {
+        self.authViewModel = authViewModel ?? AuthViewModel()
     }
     
     func checkInitalScreen() async {
         
         await withTaskGroup(of: Void.self) { group in
             group.addTask {
-                await self.authController.checkLoginStatus()
+                await self.authViewModel.checkLoginStatus()
             }
             
             group.addTask {
@@ -37,7 +38,7 @@ class AppState {
         }
         
         withAnimation {
-            if authController.canFullyLogin {
+            if authViewModel.canFullyLogin {
                 self.currentScreen = .main
             } else {
                 self.currentScreen = .auth

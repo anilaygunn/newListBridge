@@ -5,7 +5,8 @@
 
 import SwiftUI
 
-struct RootView: View {
+struct ContentView: View {
+    
     @Environment(AppState.self) var appState
     
     var body: some View {

@@ -10,7 +10,7 @@ import Foundation
 struct AppleMusicTokenResponse : Codable {
     
     let developerToken: String
-    let expiresIn: Int
+    let expiresIn: String
     
     enum CodingKeys: String, CodingKey {
         case developerToken = "token"

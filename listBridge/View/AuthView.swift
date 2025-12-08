@@ -9,7 +9,7 @@ import SwiftUI
 
 struct AuthView: View {
     
-    let authController = AuthController.shared
+    @Environment(AppState.self) var appState
     
     var onLoginSuccess: () -> Void
     
@@ -64,9 +64,9 @@ struct AuthView: View {
                     
                     Button {
                         Task { @MainActor in
-                            await authController.logInWithSpotify()
+                            await appState.authViewModel.logInWithSpotify()
                             
-                            if authController.canFullyLogin{
+                            if appState.authViewModel.canFullyLogin{
                                 onLoginSuccess()
                             }
                         }
@@ -78,7 +78,7 @@ struct AuthView: View {
                                 .frame(width: 24, height: 24)
                                 .foregroundColor(.black)
                             
-                            Text(authController.isSpotifyLoggedIn ? "Continue with Spotify" : "Continue with Spotify")
+                            Text(appState.authViewModel.isSpotifyLoggedIn ? "Logged in with Spotify" : "Log in with Spotify")
                                 .font(.system(size: 18, weight: .semibold))
                         }
                         .foregroundStyle(.black)
@@ -93,24 +93,24 @@ struct AuthView: View {
                     
                     Button(action:{
                         Task {
-                            await authController.requestAppleMusicAccess()
+                            await appState.authViewModel.requestAppleMusicAccess()
                             
-                            if authController.canFullyLogin {
+                            if appState.authViewModel.canFullyLogin {
                                 onLoginSuccess()
                             }
                         }
                     }) {
                         HStack(spacing: 12) {
                             
-                            Image(systemName: "applelogo") // Veya "applelogo"
+                            Image(systemName: "applelogo") 
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 20, height: 20)
-                                .foregroundStyle(Color(red: 0.98, green: 0.18, blue: 0.28)) // İkon Rengi Kırmızı
+                                .foregroundStyle(Color(red: 0.98, green: 0.18, blue: 0.28)) 
                             
-                            Text(authController.isAppleloggedIn ? "Continue with Apple Music" : "Continue with Apple Music")
+                            Text(appState.authViewModel.isAppleloggedIn ? "Logged In with Apple Music" : "Log in with Apple Music")
                                 .font(.system(size: 18, weight: .semibold))
-                                .foregroundStyle(.black) // Yazı Rengi Siyah
+                                .foregroundStyle(.black)
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
@@ -133,9 +133,19 @@ struct AuthView: View {
                 }
             }
         }
+        .onAppear {
+            Task {
+                await appState.authViewModel.checkLoginStatus()
+                
+                if appState.authViewModel.canFullyLogin {
+                     onLoginSuccess()
+                }
+            }
+        }
     }
 }
 
 #Preview {
     AuthView(onLoginSuccess: {})
+        .environment(AppState())
 }
