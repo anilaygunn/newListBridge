@@ -64,9 +64,15 @@ struct AuthView: View {
                     
                     Button {
                         Task { @MainActor in
+<<<<<<< HEAD
                             await appState.authViewModel.logInWithSpotify()
                             
                             if appState.authViewModel.canFullyLogin{
+=======
+                            await authController.logInWithSpotify()
+                            
+                            if authController.canFullyLogin{
+>>>>>>> 5898a15 (Auth view updated.)
                                 onLoginSuccess()
                             }
                         }
@@ -78,7 +84,11 @@ struct AuthView: View {
                                 .frame(width: 24, height: 24)
                                 .foregroundColor(.black)
                             
+<<<<<<< HEAD
                             Text(appState.authViewModel.isSpotifyLoggedIn ? "Logged in with Spotify" : "Log in with Spotify")
+=======
+                            Text(authController.isSpotifyLoggedIn ? "Continue with Spotify" : "Continue with Spotify")
+>>>>>>> 5898a15 (Auth view updated.)
                                 .font(.system(size: 18, weight: .semibold))
                         }
                         .foregroundStyle(.black)
@@ -93,15 +103,22 @@ struct AuthView: View {
                     
                     Button(action:{
                         Task {
+<<<<<<< HEAD
                             await appState.authViewModel.requestAppleMusicAccess()
                             
                             if appState.authViewModel.canFullyLogin {
+=======
+                            await authController.requestAppleMusicAccess()
+                            
+                            if authController.canFullyLogin {
+>>>>>>> 5898a15 (Auth view updated.)
                                 onLoginSuccess()
                             }
                         }
                     }) {
                         HStack(spacing: 12) {
                             
+<<<<<<< HEAD
                             Image(systemName: "applelogo") 
                                 .resizable()
                                 .scaledToFit()
@@ -111,6 +128,17 @@ struct AuthView: View {
                             Text(appState.authViewModel.isAppleloggedIn ? "Logged In with Apple Music" : "Log in with Apple Music")
                                 .font(.system(size: 18, weight: .semibold))
                                 .foregroundStyle(.black)
+=======
+                            Image(systemName: "applelogo") // Veya "applelogo"
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 20, height: 20)
+                                .foregroundStyle(Color(red: 0.98, green: 0.18, blue: 0.28)) // İkon Rengi Kırmızı
+                            
+                            Text(authController.isAppleloggedIn ? "Continue with Apple Music" : "Continue with Apple Music")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(.black) // Yazı Rengi Siyah
+>>>>>>> 5898a15 (Auth view updated.)
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
@@ -130,6 +158,7 @@ struct AuthView: View {
                     .foregroundStyle(.gray.opacity(0.6))
                     .padding(.top, 20)
                     .padding(.bottom, 40)
+<<<<<<< HEAD
                 }
             }
         }
@@ -139,6 +168,8 @@ struct AuthView: View {
                 
                 if appState.authViewModel.canFullyLogin {
                      onLoginSuccess()
+=======
+>>>>>>> 5898a15 (Auth view updated.)
                 }
             }
         }
@@ -147,5 +178,8 @@ struct AuthView: View {
 
 #Preview {
     AuthView(onLoginSuccess: {})
+<<<<<<< HEAD
         .environment(AppState())
+=======
+>>>>>>> 5898a15 (Auth view updated.)
 }
